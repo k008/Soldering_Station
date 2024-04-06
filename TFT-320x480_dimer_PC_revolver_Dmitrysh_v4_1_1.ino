@@ -13,13 +13,13 @@
 #include <UTFT.h>
 
 #define resist_keyboard 1 //Раскоментировать, если клавиатура резистивная
-#define params_from_pc 1 //Раскоментировать, если нужно передавать параметры в РС
+//#define params_from_pc 1 //Раскоментировать, если нужно передавать параметры в РС
 //#define no_pc 1;       //Раскоментировать, если вообще не надо связь с РС и закоментировать params_from_pc
 
 
 //Секция экрана-----------------------------------------
-//UTFT myGLCD(CTE40, 38, 39, 40, 41);
-UTFT myGLCD(CTE32HR, 38, 39, 40, 41);
+UTFT myGLCD(CTE40, 38, 39, 40, 41);
+//UTFT myGLCD(CTE32HR, 38, 39, 40, 41);
 extern uint8_t SmallFont[];
 extern uint8_t BigFont[];
 extern uint8_t BigFontRus[]; //Кирилица
@@ -32,10 +32,10 @@ float e1, p1, d1, e2, p2, d2; //ошибка регулирования, П-со
 #define i_min 0.0         //минимум И составляющей
 #define i_max 100.0       //максимум И составляющей
 
-byte Setpoint1;
+unsigned int Setpoint1;
 double Input1;
-byte  Output1;
-byte  Output2;
+unsigned int  Output1;
+unsigned int  Output2;
 double Input2;
 #define SENSOR_SAMPLING_TIME 250 //время чтения температуры и пересчёта ПИД(милисекунды)
 //-----------------------------------------------------------
@@ -80,14 +80,14 @@ struct A_PIN_DESC { // определяем  структуру которой �
   int expectedValue;// ожидаемое значение
 };
 A_PIN_DESC expected_values[] = { // ожидаемые значения для псевдо-кнопок
-  { PIN_RIGHT, 166},
-  { PIN_UP, 30},
-  { PIN_DOWN, 87},
-  { PIN_LEFT, 0},
-  { PIN_SELECT, 353}
+  { PIN_RIGHT, 0},
+  { PIN_UP, 145},
+  { PIN_DOWN, 351},
+  { PIN_LEFT, 513},
+  { PIN_SELECT, 750}
 };
 #define A_PINS_COUNT sizeof(expected_values)/sizeof(A_PIN_DESC) // вычисляем сколько у нас всего "псевдо-кнопок" заданно.
-#define A_POSSIBLE_ABERRATION 10 // допустимое отклонение analogRead от ожидаемого значения, при котором псевдо кнопка считается нажатой
+#define A_POSSIBLE_ABERRATION 70 // допустимое отклонение analogRead от ожидаемого значения, при котором псевдо кнопка считается нажатой
 bool digitalReadA(byte pinNo) {
 
   for (byte i = 0; i < A_PINS_COUNT; i++) { // ищем описание нашего всевдо-пина
@@ -138,27 +138,27 @@ boolean button_state1 = false;
 //------------------------------------------------------------------------
 
 //Секция профиля----------------------------------------------------------
-struct pr {                   //основные поля профиля
-  byte profileSteps;            //количество шагов профиля
-  byte Setpoint2;               //заданная температура нижнего нагревателя
-  byte rampRateStep[3];         //скорость роста температуры
-  byte dwellTimerStep[3];       //установленное время перехода на следующий шаг
-  byte temperatureStep[3];      //заданные температуры для шагов профиля ВИ
-  byte min_pwr_TOPStep[3];      //минимальная мощность верхнего нагревателя
-  byte max_pwr_TOPStep[3];      //максимальная мощность верхнего нагревателя
-  byte BottomRampRateStep;      //скорость нагрева нижним нагревателем
-  byte kp1;                     //пропорциональный коэффициент ВИ
-  byte ki1;                     //интегральный коэффициент ВИ
-  byte kd1;                     //дифференциальный коэффициент ВИ
-  byte kp2;                     //пропорциональный коэффициент НИ
-  byte ki2;                     //дифференциальный коэффициент НИ
-  byte kd2;                     //дифференциальный коэффициент НИ
-  byte tableSize;               //размер стола
-  byte min_pwr_BOTTOM;          //минимальная мощность нижнего нагревателя
-  byte max_pwr_BOTTOM;          //максимальная мощность нижнего нагревателя
+struct pr {                        //основные поля профиля
+  byte profileSteps;               //количество шагов профиля
+  unsigned int Setpoint2;          //заданная температура нижнего нагревателя
+  byte rampRateStep[3];            //скорость роста температуры
+  byte dwellTimerStep[3];          //установленное время перехода на следующий шаг
+  unsigned int temperatureStep[3]; //заданные температуры для шагов профиля ВИ
+  byte min_pwr_TOPStep[3];         //минимальная мощность верхнего нагревателя
+  byte max_pwr_TOPStep[3];         //максимальная мощность верхнего нагревателя
+  byte BottomRampRateStep;         //скорость нагрева нижним нагревателем
+  byte kp1;                        //пропорциональный коэффициент ВИ
+  byte ki1;                        //интегральный коэффициент ВИ
+  byte kd1;                        //дифференциальный коэффициент ВИ
+  byte kp2;                        //пропорциональный коэффициент НИ
+  byte ki2;                        //дифференциальный коэффициент НИ
+  byte kd2;                        //дифференциальный коэффициент НИ
+  byte tableSize;                  //размер стола
+  byte min_pwr_BOTTOM;             //минимальная мощность нижнего нагревателя
+  byte max_pwr_BOTTOM;             //максимальная мощность нижнего нагревателя
 };
 
-byte SizeProfile = sizeof(pr);// длинна поля данных
+unsigned int SizeProfile = sizeof(pr);// длинна поля данных
 pr profile;                   //структура для параметров
 byte currentProfile = 1;      //текущий профиль
 byte currentStep = 1;         //текущий шаг профиля
@@ -194,18 +194,23 @@ boolean is_bottomRamp = false;        //признак работы рампы �
 //------------------------------------------------------------------------
 
 //Секция переменных общего назначения-------------------------------------
-byte SP2;
-byte bottomTemp;
-int startTemp;
-byte setpointRamp;
+unsigned int SP2;
+unsigned int bottomTemp;
+unsigned int startTemp;
+unsigned int setpointRamp;
 int counter;
 long previousMillis; //это для счетчиков
 unsigned long nextRead1; //переменная для обновления текущей температуры
-int tc1;
-int tc2;
+unsigned int tc1;
+unsigned int tc2;
 byte Secs = 0;
 unsigned long prev_millis = 0;
 int i = 0;
+float Input1_spd;
+float Input2_spd;
+
+int Input1_fraction;
+int Input2_fraction;
 //------------------------------------------------------------------------
 
 //секция ввода/вывода для ПЭВМ-----------------------------------------------
@@ -472,12 +477,12 @@ void loop()
         myGLCD.clrScr();
         myGLCD.setFont(BigFontRus);
         myGLCD.setColor(VGA_SILVER);
-        myGLCD.textRus("`", 155, 115);
+        myGLCD.textRus("`", 175, 115);
         myGLCD.textRus("`/с", 175, 133);
         myGLCD.textRus("`/с", 175, 245);
-        myGLCD.textRus("`", 155, 227);
-        myGLCD.textRus("`", 450, 123);
-        myGLCD.textRus("`", 450, 235);
+        myGLCD.textRus("`", 175, 227);
+        myGLCD.textRus("`", 420, 120);
+        myGLCD.textRus("`", 420, 232);
         myGLCD.setColor(100, 100, 100);  // "вкладка"
         myGLCD.drawLine(195, 108, 210, 78); //   для
         myGLCD.drawLine(210, 78, 475, 78); // мощности
@@ -488,11 +493,11 @@ void loop()
         myGLCD.drawLine(210, 191, 475, 191); // мощности
         myGLCD.drawLine(475, 191, 475, 221); //   низа
         myGLCD.drawLine(197, 219, 475, 219); //
-        myGLCD.setColor(30, 30, 30);
+        //myGLCD.setColor(30,30,30);
         myGLCD.textRus("График Температуры", 90, 20);
         myGLCD.setColor(VGA_SILVER);
-        myGLCD.textRus("Мощность      %", 230, 84);
-        myGLCD.textRus("Мощность      %", 230, 198);
+        myGLCD.textRus("Мощность    %", 230, 84);
+        myGLCD.textRus("Мощность    %", 230, 198);
         myGLCD.drawRoundRect(3, 108, 478, 179);
         myGLCD.drawRoundRect(3, 221, 478, 291);
         myGLCD.setColor(40, 40, 40);    // верхний график
@@ -503,8 +508,8 @@ void loop()
         myGLCD.drawLine(224, 221, 224, 291); //
         myGLCD.textRus("ВЕРХ->", 5, 115);
         myGLCD.textRus("НИЗ ->", 5, 227);
-        myGLCD.textRus("Рост=", 5, 133);
-        myGLCD.textRus("Рост=", 5, 245);
+        myGLCD.textRus("Рост", 5, 133);
+        myGLCD.textRus("Рост", 5, 245);
         updateScreen = false;
       }
 
@@ -568,25 +573,25 @@ void loop()
         sprintf (buf, "OK%03d%03d%03d%03d%03d\r\n", (Output1), (Output2), tc1, tc2, (profileName));
         Serial.print(buf);
 #endif
-        if (isnan(Input1)) {
+        if (Input1 <= -0) {
           myGLCD.setColor(VGA_BLACK);
           myGLCD.drawRoundRect(340, 100, 460, 180);
           myGLCD.setFont(BigFont);
           myGLCD.setColor(VGA_RED);
-          myGLCD.print("ERROR", 360, 140);
+          myGLCD.print("ERROR", 250, 140);
         } else {
           myGLCD.setFont(SevenSegNumFont);
           myGLCD.setColor(VGA_SILVER);
-          myGLCD.printNumI(tc1, 345, 120, 3, '0');
+          myGLCD.printNumI(tc1, 235, 120, 4, '0');
         }
-        if (isnan(Input2)) {
+        if (Input2 <= -0) {
           myGLCD.setFont(BigFont);
           myGLCD.setColor(VGA_RED);
-          myGLCD.print("ERROR", 360, 250);
+          myGLCD.print("ERROR", 250, 250);
         } else {
           myGLCD.setFont(SevenSegNumFont);
           myGLCD.setColor(VGA_SILVER);
-          myGLCD.printNumI(tc2, 345, 232, 3, '0');
+          myGLCD.printNumI(tc2, 235, 232, 4, '0');
         }
       }
 
@@ -594,8 +599,8 @@ void loop()
       myGLCD.setColor(250, 180, 000);
       myGLCD.printNumI(currentProfile, 440, 300, 2);
       myGLCD.setColor(VGA_SILVER);
-      myGLCD.printNumI(profile.temperatureStep[editStep], 100, 115, 3, '0');
-      myGLCD.printNumI(SP2, 100, 227, 3, '0');
+      myGLCD.printNumI(profile.temperatureStep[editStep], 100, 115, 4, ' ');
+      myGLCD.printNumI(SP2, 100, 227, 4, ' ');
 
       profileName = currentProfile;
       myGLCD.setFont(BigFontRus);
@@ -731,7 +736,7 @@ START: ms_button =  millis();
         myGLCD.printNumI(profile.min_pwr_BOTTOM, 380, 220, 3, '0');
         myGLCD.printNumI(profile.max_pwr_BOTTOM, 380, 260, 3, '0');
         myGLCD.setFont(SevenSegNumFont);
-        myGLCD.printNumI(SP2, 75, 220);
+        myGLCD.printNumI(SP2, 75, 220, 4, '0');
         myGLCD.setColor(250, 180, 000);
         myGLCD.drawRoundRect(5, 103, 200, 131);
         myGLCD.setFont(BigFontRus);
@@ -858,15 +863,15 @@ START: ms_button =  millis();
         updateScreen = false;
       }
 
-      myGLCD.printNumI(profile.Setpoint2, 75, 220, 3, '0');
+      myGLCD.printNumI(profile.Setpoint2, 75, 220, 4, '0');
 
       if (upSwitchState == HIGH && ( millis() - ms_button) > 100)
       {
         ms_button =  millis();
         profile.Setpoint2 = profile.Setpoint2 + 1;
-        if (profile.Setpoint2 >= 250)
+        if (profile.Setpoint2 >= 1200)
         {
-          profile.Setpoint2 = 250;
+          profile.Setpoint2 = 20;
         }
       }
       if (downSwitchState == HIGH && ( millis() - ms_button) > 100)
@@ -875,7 +880,7 @@ START: ms_button =  millis();
         profile.Setpoint2 = profile.Setpoint2 - 1;
         if (profile.Setpoint2 <= 20)
         {
-          profile.Setpoint2 = 20;
+          profile.Setpoint2 = 1200;
         }
       }
       if (okSwitchState == HIGH && !button_state && ( millis() - ms_button) > 100)
@@ -911,7 +916,7 @@ START: ms_button =  millis();
         myGLCD.setColor(VGA_SILVER);
         myGLCD.textRus("ТЕМПЕРАТУРА НИЗ", 5, 180);
         myGLCD.setFont(SevenSegNumFont);
-        myGLCD.printNumI(SP2, 75, 220, 3, '0');
+        myGLCD.printNumI(SP2, 75, 220, 4, '0');
         myGLCD.setColor(250, 180, 000);
         myGLCD.drawRoundRect(275, 175, 475, 203);
         myGLCD.setFont(BigFontRus);
@@ -1039,9 +1044,9 @@ START: ms_button =  millis();
       {
         ms_button =  millis();
         profile.BottomRampRateStep = profile.BottomRampRateStep + 1;
-        if (profile.BottomRampRateStep >= 50)
+        if (profile.BottomRampRateStep >= 99)
         {
-          profile.BottomRampRateStep = 50;
+          profile.BottomRampRateStep = 1;
         }
       }
       if (downSwitchState == HIGH && ( millis() - ms_button) > 100)
@@ -1050,7 +1055,7 @@ START: ms_button =  millis();
         profile.BottomRampRateStep = profile.BottomRampRateStep - 1;
         if (profile.BottomRampRateStep <= 1)
         {
-          profile.BottomRampRateStep = 1;
+          profile.BottomRampRateStep = 99;
         }
       }
       if (okSwitchState == HIGH && !button_state && ( millis() - ms_button) > 100)
@@ -1105,7 +1110,7 @@ START: ms_button =  millis();
         myGLCD.printNumI(currentProfile, 88, 20);
         myGLCD.setColor(VGA_SILVER);
         myGLCD.setFont(SevenSegNumFont);
-        myGLCD.printNumI(profile.temperatureStep[editStep], 55, 180, 3, '0');
+        myGLCD.printNumI(profile.temperatureStep[editStep], 55, 180, 4, '0');
         myGLCD.setFont(BigFont);
         myGLCD.printNumI(profile.dwellTimerStep[editStep], 427, 270, 2, '0');
         myGLCD.setColor(250, 180, 000);
@@ -1118,9 +1123,9 @@ START: ms_button =  millis();
       {
         ms_button =  millis();
         profile.rampRateStep[editStep] = profile.rampRateStep[editStep] + 1;
-        if (profile.rampRateStep[editStep] >= 30)
+        if (profile.rampRateStep[editStep] >= 99)
         {
-          profile.rampRateStep[editStep] = 30;  //максимальная скорость роста температуры от 0.1с. до 3с.
+          profile.rampRateStep[editStep] = 1;  //максимальная скорость роста температуры от 0.1с. до 3с.
         }
       }
       if (downSwitchState == HIGH && ( millis() - ms_button) > 100)
@@ -1129,7 +1134,7 @@ START: ms_button =  millis();
         profile.rampRateStep[editStep] = profile.rampRateStep[editStep] - 1;
         if (profile.rampRateStep[editStep] <= 1)
         {
-          profile.rampRateStep[editStep] = 1;  //минимальная скорость роста температуры от 3с. до 0.1с.
+          profile.rampRateStep[editStep] = 99;  //минимальная скорость роста температуры от 3с. до 0.1с.
         }
       }
       if (okSwitchState == HIGH && !button_state && ( millis() - ms_button) > 100)
@@ -1174,11 +1179,11 @@ START: ms_button =  millis();
         myGLCD.drawRoundRect(2, 131, 200, 160);
         myGLCD.printNumI(editStep + 1, 70, 55);
         myGLCD.setFont(SevenSegNumFont);
-        myGLCD.printNumI(profile.temperatureStep[editStep], 55, 180, 3, '0');
+        myGLCD.printNumI(profile.temperatureStep[editStep], 55, 180, 4, '0');
         updateScreen = false;
       }
 
-      myGLCD.printNumI(profile.temperatureStep[editStep], 55, 180, 3, '0');
+      myGLCD.printNumI(profile.temperatureStep[editStep], 55, 180, 4, '0');
 
       if (profile.temperatureStep[editStep] <= profile.Setpoint2)
       {
@@ -1194,9 +1199,9 @@ START: ms_button =  millis();
       {
         ms_button =  millis();
         profile.temperatureStep[editStep] = profile.temperatureStep[editStep] + 1;
-        if (profile.temperatureStep[editStep] >= 250)
+        if (profile.temperatureStep[editStep] >= 1200)
         {
-          profile.temperatureStep[editStep] = 250;
+          profile.temperatureStep[editStep] = 0;
         }
       }
       if (downSwitchState == HIGH && ( millis() - ms_button) > 100)
@@ -1205,7 +1210,7 @@ START: ms_button =  millis();
         profile.temperatureStep[editStep] = profile.temperatureStep[editStep] - 1;
         if (profile.temperatureStep[editStep] <= 0)
         {
-          profile.temperatureStep[editStep] = 0;
+          profile.temperatureStep[editStep] = 1200;
         }
 
       }
@@ -1245,7 +1250,7 @@ START: ms_button =  millis();
         myGLCD.textRus("ТЕМП-РА ВЕРХ", 5, 140);
         myGLCD.printNumF(profile.rampRateStep[editStep] * 0.1, 0, 380, 90);
         myGLCD.setFont(SevenSegNumFont);
-        myGLCD.printNumI(profile.temperatureStep[editStep], 55, 180, 3, '0');
+        myGLCD.printNumI(profile.temperatureStep[editStep], 55, 180, 4, '0');
         myGLCD.setFont(BigFontRus);
         myGLCD.setColor(VGA_LIME);
         myGLCD.textRus("МОЩНОСТЬ ВЕРХ", 260, 140);
@@ -1315,7 +1320,7 @@ START: ms_button =  millis();
         myGLCD.printNumI(profile.min_pwr_TOPStep[editStep], 370, 180, 3, '0');
         myGLCD.printNumF(profile.rampRateStep[editStep] * 0.1, 0, 380, 90);
         myGLCD.setFont(SevenSegNumFont);
-        myGLCD.printNumI(profile.temperatureStep[editStep], 55, 180, 3, '0');
+        myGLCD.printNumI(profile.temperatureStep[editStep], 55, 180, 4, '0');
         myGLCD.setFont(BigFontRus);
         myGLCD.setColor(VGA_LIME);
         myGLCD.textRus("МАХ", 310, 220);
@@ -1384,7 +1389,7 @@ START: ms_button =  millis();
         myGLCD.printNumI(profile.max_pwr_TOPStep[editStep], 370, 220, 3, '0');
         myGLCD.printNumF(profile.rampRateStep[editStep] * 0.1, 0, 380, 90);
         myGLCD.setFont(SevenSegNumFont);
-        myGLCD.printNumI(profile.temperatureStep[editStep], 55, 180, 3, '0');
+        myGLCD.printNumI(profile.temperatureStep[editStep], 55, 180, 4, '0');
         myGLCD.setFont(BigFontRus);
         myGLCD.setColor(VGA_LIME);
         myGLCD.textRus("ВРЕМЯ ПЕРЕХОДА НА СЛЕД ШАГ", 5, 270);
@@ -1460,7 +1465,7 @@ START: ms_button =  millis();
         myGLCD.print("I=", 230, 205);
         myGLCD.print("D=", 405, 205);
         myGLCD.setColor(250, 180, 000);
-        myGLCD.print("P=", 55, 70);
+        myGLCD.print(String("P="), 55, 70);
         myGLCD.setFont(SevenSegNumFont);
         myGLCD.drawRoundRect(80, 28, 390, 55);
         myGLCD.printNumI(profile.kp2, 25, 100, 3, '0');
@@ -1554,6 +1559,7 @@ START: ms_button =  millis();
       if (cancelSwitchState == HIGH && ( millis() - ms_button) > 60)
       {
         ms_button =  millis();
+        updateScreen = true;
         reflowState = REFLOW_STATE_IDLE;
       }
       break;
@@ -1605,6 +1611,7 @@ START: ms_button =  millis();
       if (cancelSwitchState == HIGH && ( millis() - ms_button) > 60)
       {
         ms_button =  millis();
+        updateScreen = true;
         reflowState = REFLOW_STATE_IDLE;
       }
       break;
@@ -1720,6 +1727,7 @@ START: ms_button =  millis();
       if (cancelSwitchState == HIGH && ( millis() - ms_button) > 60)
       {
         ms_button =  millis();
+        updateScreen = true;
         reflowState = REFLOW_STATE_IDLE;
       }
       break;
@@ -1772,7 +1780,8 @@ START: ms_button =  millis();
       if (cancelSwitchState == HIGH && ( millis() - ms_button) > 60)
       {
         ms_button =  millis();
-        myGLCD.clrScr();
+        //myGLCD.clrScr();
+        updateScreen = true;
         reflowState = REFLOW_STATE_IDLE;
       }
       break;
@@ -1799,7 +1808,7 @@ START: ms_button =  millis();
     case REFLOW_STATE_PRE_HEATER:
       myGLCD.setFont(BigFontRus);
       myGLCD.setColor(VGA_RED);
-      myGLCD.textRus("ПРЕДНАГРЕВ", 20, 300);
+      myGLCD.textRus("ПРЕДНАГРЕВ", 2, 300);
       Output2 = 3;
       if (cancelSwitchState == HIGH && ( millis() - ms_button) > 60)
       {
@@ -1811,7 +1820,7 @@ START: ms_button =  millis();
       {
         myGLCD.setFont(BigFontRus);
         myGLCD.setColor(VGA_BLACK);
-        myGLCD.textRus("ПРЕДНАГРЕВ", 20, 300);
+        myGLCD.textRus("ПРЕДНАГРЕВ", 2, 300);
         Output2 = 0;
         //bottomTemp=tc2;
         reflowState = REFLOW_STATE_STEP_RAMP;
@@ -1834,7 +1843,9 @@ START: ms_button =  millis();
         else bottomTemp = profile.Setpoint2;
         myGLCD.setFont(BigFont);
         myGLCD.setColor(250, 180, 000);
-        myGLCD.printNumI(bottomTemp, 100, 227, 3, '0');
+        if (bottomTemp < 9999) {
+          myGLCD.printNumI(bottomTemp, 100, 227, 4, '0');
+        }
       }
       if (Input2 >= profile.Setpoint2 )
       {
@@ -1865,8 +1876,8 @@ START: ms_button =  millis();
         myGLCD.textRus(profile_names[profileName - 1], 180, 300);
         myGLCD.setFont(BigFont);
         myGLCD.setColor(250, 180, 000);
-        myGLCD.printNumI(profile.temperatureStep[editStep], 100, 115, 3, '0');
-        //myGLCD.printNumI(SP2,100, 227,3,'0');
+        myGLCD.printNumI(profile.temperatureStep[editStep], 100, 115, 4, '0');
+        //myGLCD.printNumI(SP2,100, 227,4,'0');
         myGLCD.setFont(BigFontRus);
         myGLCD.setColor(0, 255, 50);
         updateScreen = false;
@@ -1906,8 +1917,8 @@ START: ms_button =  millis();
           setpointRamp = counter + startTemp;
           //myGLCD.setFont(BigFont);
           myGLCD.setColor(250, 180, 000);
-          //myGLCD.printNumI(setpointRamp,420, 300,3,'0');
-          myGLCD.printNumI(setpointRamp, 100, 115, 3, '0');
+          //myGLCD.printNumI(setpointRamp,420, 300,4,'0');
+          myGLCD.printNumI(setpointRamp, 100, 115, 4, '0');
           Setpoint1 = setpointRamp;
 
         }
@@ -1975,7 +1986,7 @@ START: ms_button =  millis();
       {
         myGLCD.setFont(BigFont);
         myGLCD.setColor(VGA_RED);
-        myGLCD.printNumI(counter, 120, 300, 2, '0');
+        //myGLCD.printNumI(counter, 120, 300, 2, '0');
         tone(buzzerPin, 1045, 500);  //звуковой сигнал
         counter = 0;
         setpointRamp = 0;
@@ -2050,23 +2061,41 @@ START: ms_button =  millis();
       tc2 = Input2;
       myGLCD.setColor(VGA_YELLOW);
       myGLCD.setFont(BigFontRus);
-      myGLCD.printNumF((Input1 - Input_f1) * 1000 / (millis() - prev_millis), 2, 92, 133, ',', 5);
-      myGLCD.printNumF((Input2 - Input_f2) * 1000 / (millis() - prev_millis), 2, 92, 245, ',', 5);
+      Input1_spd = (Input1 - Input_f1) * 1000 / (millis() - prev_millis);
+      Input2_spd = (Input2 - Input_f2) * 1000 / (millis() - prev_millis);
+      if (abs(Input1_spd) < 10) {
+        myGLCD.printNumF(Input1_spd, 2, 84, 133, ',', 5);
+      }
+
+      if (abs(Input2_spd) < 10) {
+        myGLCD.printNumF(Input2_spd, 2, 84, 245, ',', 5);
+      }
+
       prev_millis = millis();
       Input_f1 = Input1;
       Input_f2 = Input2;
       myGLCD.setColor(255, 80, 000);
       myGLCD.setFont(BigFontRus);
-      myGLCD.printNumI((Input2 - int(Input2)) * 100, 443, 268, 2, '0');
-      myGLCD.printNumI((Input1 - int(Input1)) * 100, 443, 155, 2, '0');
+
+      Input2_fraction = (Input2 - int(Input2)) * 100;
+      Input1_fraction = (Input1 - int(Input1)) * 100;
+
+      if ((Input2_fraction < 99) and (Input2_fraction >= 0)) {
+        myGLCD.printNumI(Input2_fraction, 365, 232, 2, '0');
+      }
+
+      if ((Input1_fraction < 99) and (Input1_fraction >= 0)) {
+        myGLCD.printNumI(Input1_fraction, 365, 120, 2, '0');
+      }
+
       //--------------------------------
       myGLCD.setColor(VGA_YELLOW);
-      myGLCD.textRus("НАГРЕВ", 235, 266);
-      if (TopStart) myGLCD.textRus("НАГРЕВ", 235, 153);
+      myGLCD.textRus("НАГРЕВ", 365, 266);
+      if (TopStart) myGLCD.textRus("НАГРЕВ", 365, 153);
       if ( reflowState != REFLOW_STATE_BOTTOM_STEP_RAMP)
       { Icontrol();
         myGLCD.setColor(250, 180, 000);
-        myGLCD.printNumI(bottomTemp, 100, 227, 3, '0');
+        myGLCD.printNumI(bottomTemp, 100, 227, 4, '0');
       }
 #ifndef no_pc
       sprintf (buf, "OK%03d%03d%03d%03d%03d\r\n", int(Output1), int(Output2), tc1, tc2, int(profileName)); // график ПК
@@ -2103,23 +2132,23 @@ START: ms_button =  millis();
       } CTgr++;
       //============================================================
 
-      if (isnan(Input1)) {
+      if (Input1 <= -0) {
         myGLCD.setFont(BigFont);
         myGLCD.setColor(VGA_RED);
-        myGLCD.print("ERROR", 360, 140);
+        myGLCD.print("ERROR", 250, 140);
       } else {
         myGLCD.setFont(SevenSegNumFont);
         myGLCD.setColor(VGA_RED);
-        myGLCD.printNumI(tc1, 345, 120, 3, '0');
+        myGLCD.printNumI(tc1, 235, 120, 4, '0');
       }
-      if (isnan(Input2)) {
+      if (Input2 <= -0) {
         myGLCD.setFont(BigFont);
         myGLCD.setColor(VGA_RED);
-        myGLCD.print("ERROR", 360, 250);
+        myGLCD.print("ERROR", 250, 250);
       } else {
         myGLCD.setFont(SevenSegNumFont);
         myGLCD.setColor(VGA_RED);
-        myGLCD.printNumI(tc2, 345, 232, 3, '0');
+        myGLCD.printNumI(tc2, 235, 232, 4, '0');
       }
     }
 
@@ -2127,7 +2156,7 @@ START: ms_button =  millis();
       digitalWrite(P4_PIN, HIGH);
       tone(buzzerPin, 1045, 500);  //звуковой сигнал
     }
-    if (tc1 >= 250)
+    if (tc1 >= 1100)
     {
       digitalWrite(P1_PIN, LOW);
       digitalWrite(P2_PIN, LOW);
@@ -2167,7 +2196,7 @@ void Icontrol()
   {
     ms_button =  millis();
     bottomTemp++;
-    if (bottomTemp >= 200) bottomTemp = 200;
+    if (bottomTemp >= 900) bottomTemp = 900;
   }
 
   if (downSwitchState == HIGH && ( millis() - ms_button) > 200)
@@ -2203,9 +2232,9 @@ void OutPWR_BOTTOM() {
   digitalWrite(RelayPin2, out2); //пин через который осуществляется дискретное управление
 }
 
-byte Pid1(double temp, byte ust, byte kP, byte kI, byte kd)
+unsigned int Pid1(double temp, unsigned int ust, byte kP, byte kI, byte kd)
 {
-  byte out = 0;
+  unsigned int out = 0;
   static float ed = 0;
   e1 = (ust - temp); //ошибка регулирования
   p1 =  (kP * e1); //П составляющая
@@ -2216,9 +2245,9 @@ byte Pid1(double temp, byte ust, byte kP, byte kI, byte kd)
   return out;
 }
 
-byte Pid2(double temp, byte ust, byte kP, byte kI, byte kd)
+unsigned int Pid2(double temp, unsigned int ust, byte kP, byte kI, byte kd)
 {
-  byte out = 0;
+  unsigned int out = 0;
   static float ed = 0;
   e2 = (ust - temp); //ошибка регулирования
   p2 =  (kP * e2); //П составляющая
@@ -2244,7 +2273,7 @@ double max6675_read_temp (int ck, int cs, int so)
   }
   digitalWrite(cs, HIGH);
   if (tmp & 0x4) {
-    return NAN;
+    return -100;
   } else
     return ((tmp >> 3)) * 0.25;
 }
